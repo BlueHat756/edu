@@ -8,7 +8,9 @@ using Unity.VisualScripting;
 public class UiManager : MonoBehaviour
 {
     public TextMeshProUGUI classNameText;
-   
+    public Image charImage;
+    public string imageName;
+
     public TextMeshProUGUI maxHpValueText;
     public TextMeshProUGUI atkPwrValueText;
     public TextMeshProUGUI criPrbValueText;
@@ -25,8 +27,7 @@ public class UiManager : MonoBehaviour
     {
         int charId = CSVDataReader.Instance.ReturnId();
         ResetUI(charId);
-        
-     
+       
     }
 
    
@@ -51,7 +52,12 @@ public class UiManager : MonoBehaviour
         gotDmgValueText.text = CSVDataReader.Instance.classData[id].gotDmg.ToString();
         moveSpeedValueText.text = CSVDataReader.Instance.classData[id].moveSpeed.ToString();
 
-        foreach(GameObject item in skills)
+
+
+
+
+
+        foreach (GameObject item in skills)
         {
             item.SetActive(false);
         }
@@ -146,6 +152,8 @@ public class UiManager : MonoBehaviour
         }
     }
 
+
+    
 
     public void LRBtn(bool isLeftBtn)//1이면 4로가라, 4이면 1로가라 set int id를 매계변수로, id를 반환하는 함수로
     {

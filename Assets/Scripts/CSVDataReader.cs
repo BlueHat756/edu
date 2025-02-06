@@ -124,8 +124,7 @@ public class CSVDataReader : Singleton<CSVDataReader>//싱글톤을 상속 받는다. 기�
         while (true) //참 거짓 조건 반복문, (참:계속 반복, 거짓:탈출)
         { 
             yield return new WaitForSeconds(3);//리소스 로드가 다 되었는지 확인 후 참일 때 이 이후의 명령들을 실행함
-            Debug.LogWarning("dd");
-            break;
+                     break;
         }
       
         SceneManager.LoadScene( _scene );
