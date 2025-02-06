@@ -1,9 +1,23 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.SearchService;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UIElements;
+using static CSVDataReader;
 
-public class CSVDataReader : Singleton<CSVDataReader>
+public enum SceneName
 {
+    SMAPLE_SCENE,
+    MAIN_SCENE,
+    BATTLE_SCENE,
+}
+
+    
+public class CSVDataReader : Singleton<CSVDataReader>//싱글톤을 상속 받는다. 기본적으로는 MonoBehaviour(모노비헤이비어)가 달려있음
+{
+    
+
     #region Data Tables
     [Header("스텟 테이블 넣는 곳")]
     public TextAsset StUPtbl;
@@ -24,15 +38,16 @@ public class CSVDataReader : Singleton<CSVDataReader>
     #endregion
 
     #region Data Dicrionary
-    public Dictionary<int, StUPData> statUpData = new Dictionary<int, StUPData>();//사실상 필요없음
-    public Dictionary<int, LvStUpData> lvUpData = new Dictionary<int, LvStUpData>();
+    public Dictionary<int, StUPData> stUPData = new Dictionary<int, StUPData>();//사실상 필요없음
+    public Dictionary<float, LvStUpData> lvStUpData = new Dictionary<float, LvStUpData>();
     public Dictionary<int, ClassData> classData = new Dictionary<int, ClassData>();
     public Dictionary<int, ExpData> expData = new Dictionary<int, ExpData>();
     public Dictionary<int, StageData> stageData = new Dictionary<int, StageData>();
-    public Dictionary<int, WaveData> wavwData = new Dictionary<int, WaveData>();
+    public Dictionary<int, WaveData> waveData = new Dictionary<int, WaveData>();
     public Dictionary<int, SpawnData> spawnData = new Dictionary<int, SpawnData>();
     public Dictionary<int, MonsterData> monsterData = new Dictionary<int, MonsterData>();
     public Dictionary<int, ProjectileData> projectileData = new Dictionary<int, ProjectileData>();
+    public Dictionary<int, RiskData> riskData = new Dictionary<int, RiskData>();
     public Dictionary<int, SkillData> skillData = new Dictionary<int, SkillData>();
     public Dictionary<int, EffectData> effectData = new Dictionary<int, EffectData>();
     public Dictionary<string, GameObject> prefabData = new Dictionary<string, GameObject>();
@@ -40,8 +55,19 @@ public class CSVDataReader : Singleton<CSVDataReader>
 
     #endregion
 
+    #region User Data
+    public int curCharId;
+
+    #endregion
+
+    #region Game Data
+
+    #endregion
+
+
     void Start()
     {
+        curCharId = PlayerPrefs.GetInt("charId", 1);
         StUPDataLoad();
         LvStUpDataLoad();
         ClassDataLoad();
@@ -54,38 +80,83 @@ public class CSVDataReader : Singleton<CSVDataReader>
         ProjectileDataLoad();
         SkillDataLoad();
         EffectDataLoad();
-        
-    for(int i = 1; i < 151; i++)
-        {
-            Debug.Log(expData[i].curExp.ToString());
-        }
 
-
+        MoveScene(SceneName.MAIN_SCENE);
+      
     }
 
-    //void StUPDataLoad()
-    //{
-    //    List<Dictionary<string, StUPData>> data
-    //        = CSVReader.Read(StUPTbl);
-    //    for (int i = 0; i < data.Count; i++)
-    //    {
-    //        StUPData stData = new StUPData();
+    public int ReturnId ()
+    {
+        return curCharId;
+    }
 
-    //        int startLv = int.Parse(data[i]["startLv"].ToString());
+    public int ReturnId(bool isLeft)
+    {
+        int _id =curCharId;
 
-    //        stData.startLv = startLv;
-    //        stData.useWon = int.Parse(data[i]["useWon"].ToString());
-    //        stData.upMaxHp = float.Parse(data[i]["upMaxHp"].ToString());
-    //        stData.upAtkPwr = float.Parse(data[i]["upAtkPwr"].ToString());
-    //        stData.upCriPrb = float.Parse(data[i]["upCriPrb"].ToString());
-    //        stData.upCriDmg = float.Parse(data[i]["upCriDmg"].ToString());
-    //        stData.upHpRcv = float.Parse(data[i]["upHpRcv"].ToString());
-    //        stData.upCdnPct = float.Parse(data[i]["upCdnPct"].ToString());
+        int dataCnt = classData.Count;
 
-    //        statUpData.Add(startLv, stData);
-    //    }
+        if(isLeft)
+        {
+            //연산 (이전꺼 -1)
+            _id--;//1 > 처리를 안함
+        }
+        else
+        {
+            //연산 (이전꺼 +1)
+            _id++;// 4 < 처리를 안함
+        }
 
-    //}
+        if (_id == dataCnt + 1)//추가적인 if문으로 위에 안되어있던 요소를 처리
+            _id = 1;
+        else if (_id == 0)
+            _id = dataCnt;
+ 
+        PlayerPrefs.SetInt("charId", _id);
+
+        curCharId = _id;
+
+        return curCharId;
+    }
+
+    IEnumerator ChangeScene(string _scene)
+    {
+        while (true) //참 거짓 조건 반복문, (참:계속 반복, 거짓:탈출)
+        { 
+            yield return new WaitForSeconds(3);//리소스 로드가 다 되었는지 확인 후 참일 때 이 이후의 명령들을 실행함
+            Debug.LogWarning("dd");
+            break;
+        }
+      
+        SceneManager.LoadScene( _scene );
+    }
+
+    
+    public void MoveScene(SceneName sceneName)
+    {
+        string scene = "";
+        // 여기에 메인으로 이동해라 하는부분
+        switch (sceneName)
+        {
+            
+            case SceneName.SMAPLE_SCENE:
+                scene = "00_SampleScene";
+                break;
+
+            case SceneName.BATTLE_SCENE:
+                scene = "02_Battle";
+                break;
+
+            case SceneName.MAIN_SCENE:
+                scene = "01_Main";
+                break;
+
+        }
+        IEnumerator _changeScene = ChangeScene(scene);
+        StartCoroutine (ChangeScene(scene));
+
+        StopCoroutine(ChangeScene(scene));
+    }
 
     void StUPDataLoad()
     {
@@ -101,9 +172,9 @@ public class CSVDataReader : Singleton<CSVDataReader>
             stData.upCriDmg = float.Parse(data[i]["upCriDmg"].ToString());
             stData.upHpRcv = float.Parse(data[i]["upHpRcv"].ToString());
             stData.upCdnPct = float.Parse(data[i]["upCdnPct"].ToString());
+            stUPData.Add(stData.startLv, stData);
         }
     }
-
     void LvStUpDataLoad()
     {
         List<Dictionary<string, object>> data = CSVReader.Read(LvStUptbl); for (int i = 0; i < data.Count; i++)
@@ -115,10 +186,9 @@ public class CSVDataReader : Singleton<CSVDataReader>
             stData.criDmg = float.Parse(data[i]["criDmg"].ToString());
             stData.hpRcv = float.Parse(data[i]["hpRcv"].ToString());
             stData.cdnPct = float.Parse(data[i]["cdnPct"].ToString());
+            lvStUpData.Add(stData.maxHp, stData);
         }
     }
-
-
     void ClassDataLoad()
     {
         List<Dictionary<string, object>> data = CSVReader.Read(Classtbl); for (int i = 0; i < data.Count; i++)
@@ -142,10 +212,9 @@ public class CSVDataReader : Singleton<CSVDataReader>
             stData.skill_06 = int.Parse(data[i]["skill_06"].ToString());
             stData.skill_07 = int.Parse(data[i]["skill_07"].ToString());
             stData.skill_08 = int.Parse(data[i]["skill_08"].ToString());
+            classData.Add(stData.id, stData);
         }
     }
-
-
     void ExpDataLoad()
     {
         List<Dictionary<string, object>> data = CSVReader.Read(Exptbl); for (int i = 0; i < data.Count; i++)
@@ -153,10 +222,9 @@ public class CSVDataReader : Singleton<CSVDataReader>
             ExpData stData = new ExpData();
             stData.lv = int.Parse(data[i]["lv"].ToString());
             stData.curExp = int.Parse(data[i]["curExp"].ToString());
+            expData.Add(stData.lv, stData);
         }
     }
-
-
     void StageDataLoad()
     {
         List<Dictionary<string, object>> data = CSVReader.Read(Stagetbl); for (int i = 0; i < data.Count; i++)
@@ -169,10 +237,9 @@ public class CSVDataReader : Singleton<CSVDataReader>
             stData.waveId_04 = int.Parse(data[i]["waveId_04"].ToString());
             stData.waveId_05 = int.Parse(data[i]["waveId_05"].ToString());
             stData.waveId_06 = int.Parse(data[i]["waveId_06"].ToString());
+            stageData.Add(stData.id, stData);
         }
     }
-
-
     void WaveDataLoad()
     {
         List<Dictionary<string, object>> data = CSVReader.Read(Wavetbl); for (int i = 0; i < data.Count; i++)
@@ -192,10 +259,9 @@ public class CSVDataReader : Singleton<CSVDataReader>
             stData.spawn_02 = int.Parse(data[i]["spawn_02"].ToString());
             stData.spawn_03 = int.Parse(data[i]["spawn_03"].ToString());
             stData.spawn_04 = int.Parse(data[i]["spawn_04"].ToString());
+            waveData.Add(stData.id, stData);
         }
     }
-
-
     void SpawnDataLoad()
     {
         List<Dictionary<string, object>> data = CSVReader.Read(Spawntbl); for (int i = 0; i < data.Count; i++)
@@ -207,10 +273,9 @@ public class CSVDataReader : Singleton<CSVDataReader>
             stData.monNum_03 = int.Parse(data[i]["monNum_03"].ToString());
             stData.monNum_04 = int.Parse(data[i]["monNum_04"].ToString());
             stData.monNum_05 = int.Parse(data[i]["monNum_05"].ToString());
+            spawnData.Add(stData.id, stData);
         }
     }
-
-
     void RiskDataLoad()
     {
         List<Dictionary<string, object>> data = CSVReader.Read(Risktbl); for (int i = 0; i < data.Count; i++)
@@ -229,10 +294,9 @@ public class CSVDataReader : Singleton<CSVDataReader>
             stData.cdnPct = float.Parse(data[i]["cdnPct"].ToString());
             stData.rmnRnd = int.Parse(data[i]["rmnRnd"].ToString());
             stData.wonScale = float.Parse(data[i]["wonScale"].ToString());
+            riskData.Add(stData.id, stData);
         }
     }
-
-
     void MonsterDataLoad()
     {
         List<Dictionary<string, object>> data = CSVReader.Read(Monstertbl); for (int i = 0; i < data.Count; i++)
@@ -256,9 +320,9 @@ public class CSVDataReader : Singleton<CSVDataReader>
             stData.useSkill_06 = int.Parse(data[i]["useSkill_06"].ToString());
             stData.useSkill_07 = int.Parse(data[i]["useSkill_07"].ToString());
             stData.useSkill_08 = int.Parse(data[i]["useSkill_08"].ToString());
+            monsterData.Add(stData.id, stData);
         }
     }
-
     void ProjectileDataLoad()
     {
         List<Dictionary<string, object>> data = CSVReader.Read(Projectiletbl); for (int i = 0; i < data.Count; i++)
@@ -266,10 +330,9 @@ public class CSVDataReader : Singleton<CSVDataReader>
             ProjectileData stData = new ProjectileData();
             stData.id = int.Parse(data[i]["id"].ToString());
             stData.name = data[i]["name"].ToString();
+            projectileData.Add(stData.id, stData);
         }
     }
-
-
     void SkillDataLoad()
     {
         List<Dictionary<string, object>> data = CSVReader.Read(Skilltbl); for (int i = 0; i < data.Count; i++)
@@ -293,10 +356,9 @@ public class CSVDataReader : Singleton<CSVDataReader>
             stData.dmgPct_03 = float.Parse(data[i]["dmgPct_03"].ToString());
             stData.dmgPct_04 = float.Parse(data[i]["dmgPct_04"].ToString());
             stData.dmgPct_05 = float.Parse(data[i]["dmgPct_05"].ToString());
+            skillData.Add(stData.id, stData);
         }
     }
-
-
     void EffectDataLoad()
     {
         List<Dictionary<string, object>> data = CSVReader.Read(Effecttbl); for (int i = 0; i < data.Count; i++)
@@ -304,6 +366,7 @@ public class CSVDataReader : Singleton<CSVDataReader>
             EffectData stData = new EffectData();
             stData.id = int.Parse(data[i]["id"].ToString());
             stData.effectName = data[i]["effectName"].ToString();
+            effectData.Add(stData.id, stData);
         }
     }
 
@@ -320,6 +383,7 @@ public class CSVDataReader : Singleton<CSVDataReader>
         public float upCriDmg;  //치명타 데미지 상승량
         public float upHpRcv;  //초당 체력 회복량 상승량
         public float upCdnPct;  //스킬 쿨타임 감소율 상승량
+
     }
 
     public class LvStUpData

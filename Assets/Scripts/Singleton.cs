@@ -22,7 +22,7 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
         }
     }
 
-    public void Awake()
+    public void Awake()//제일 먼저 작동
     {
         if (transform.parent != null && transform.root != null) // 5
         {
